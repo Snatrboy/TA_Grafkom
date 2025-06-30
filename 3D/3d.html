@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aplikasi Grafika Komputer 3D</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0f0f23, #1a1a2e, #16213e);
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated background particles */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #64b5f6;
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0; }
+            50% { transform: translateY(-100px) rotate(180deg); opacity: 1; }
+        }
+
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 25px;
+            border-radius: 20px;
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(100, 181, 246, 0.3);
+            max-width: 320px;
+            max-height: calc(100vh - 40px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            animation: slideInLeft 0.8s ease-out;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        /* Custom scrollbar for controls */
+        #controls::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #controls::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        #controls::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, #64b5f6, #42a5f5);
+            border-radius: 4px;
+        }
+
+        #controls::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, #42a5f5, #1976d2);
+        }
+
+        @keyframes slideInLeft {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        #controls h3 {
+            color: #64b5f6;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 20px;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(100, 181, 246, 0.5);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 10px rgba(100, 181, 246, 0.5); }
+            to { text-shadow: 0 0 20px rgba(100, 181, 246, 0.8), 0 0 30px rgba(100, 181, 246, 0.4); }
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .control-group:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(100, 181, 246, 0.2);
+        }
+
+        .control-group label {
+            display: block;
+            color: #ffffff;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .control-group button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 3px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .control-group button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .control-group button:hover::before {
+            left: 100%;
+        }
+
+        .control-group button:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .control-group button.active {
+            background: linear-gradient(45deg, #f093fb, #f5576c);
+            box-shadow: 0 0 20px rgba(240, 147, 251, 0.6);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 20px rgba(240, 147, 251, 0.6); }
+            50% { box-shadow: 0 0 30px rgba(240, 147, 251, 0.8), 0 0 40px rgba(240, 147, 251, 0.4); }
+            100% { box-shadow: 0 0 20px rgba(240, 147, 251, 0.6); }
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin: 8px 0;
+            height: 6px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        input[type="range"]:hover {
+            opacity: 1;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #64b5f6, #42a5f5);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(100, 181, 246, 0.5);
+            transition: all 0.2s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 15px rgba(100, 181, 246, 0.8);
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            transform: scale(1.3);
+            accent-color: #64b5f6;
+        }
+
+        .checkbox-item label {
+            font-size: 12px !important;
+            margin-bottom: 0 !important;
+            text-transform: none !important;
+            letter-spacing: normal !important;
+        }
+
+        #info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(100, 181, 246, 0.3);
+            max-width: 320px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            animation: slideInUp 0.8s ease-out;
+        }
+
+        @keyframes slideInUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        #info h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #64b5f6;
+            font-size: 16px;
+            text-shadow: 0 0 10px rgba(100, 181, 246, 0.5);
+        }
+
+        #info p {
+            margin: 8px 0;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        #renderer {
+            border-radius: 25px;
+            overflow: hidden;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* MODE TERANG */
+        body.light-mode {
+            background: linear-gradient(135deg, #f8fafc, #e0e7ef, #dbeafe);
+            color: #222;
+        }
+
+        body.light-mode .bg-animation .particle {
+            background: #1976d2;
+        }
+
+        body.light-mode #controls,
+        body.light-mode #info {
+            background: rgba(255, 255, 255, 0.9);
+            color: #222;
+            border: 2px solid rgba(25, 118, 210, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-mode #controls h3,
+        body.light-mode #info h4 {
+            color: #1976d2;
+            text-shadow: 0 0 10px rgba(25, 118, 210, 0.3);
+        }
+
+        body.light-mode #controls label {
+            color: #333 !important;
+        }
+
+        body.light-mode .control-group {
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-mode .control-group button {
+            background: linear-gradient(45deg, #42a5f5, #1976d2);
+            color: white;
+        }
+
+        body.light-mode .control-group button.active {
+            background: linear-gradient(45deg, #ff9800, #f57c00);
+            box-shadow: 0 0 20px rgba(255, 152, 0, 0.5);
+        }
+
+        /* Loading animation */
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10000;
+            text-align: center;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(100, 181, 246, 0.3);
+            border-top: 3px solid #64b5f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* File input styling */
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-label {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: block;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .file-input-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(78, 205, 196, 0.4);
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            #controls, #info {
+                position: relative;
+                margin: 20px;
+                max-width: none;
+                max-height: none;
+            }
+            
+            #controls {
+                order: 1;
+                max-height: 60vh;
+            }
+            
+            #info {
+                order: 2;
+            }
+            
+            #container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading screen -->
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+        <p style="color: #64b5f6; margin-top: 15px; font-weight: 600;">Loading 3D Engine...</p>
+    </div>
+
+    <!-- Background animation -->
+    <div class="bg-animation" id="bgAnimation"></div>
+
+    <div id="container">
+        <div id="controls">
+            <h3>🎮 Kontrol 3D</h3>
+
+            <div class="control-group">
+                <label>🌓 Mode Tampilan:</label>
+                <button id="toggleModeBtn" onclick="toggleMode()">🌙 Dark Mode</button>
+            </div>
+
+            <div class="control-group">
+                <label>🎲 Objek 3D:</label>
+                <button onclick="createCube()" class="active" id="cubeBtn">📦 Kubus</button>
+                <button onclick="createPyramid()" id="pyramidBtn">🔺 Piramida</button>
+                <button onclick="createSphere()" id="sphereBtn">⚽ Sphere</button>
+                <button onclick="createTorus()" id="torusBtn">🍩 Torus</button>
+            </div>
+
+            <div class="control-group">
+                <label>📁 Load Model:</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="objFileInput" accept=".obj" onchange="loadOBJFile(event)">
+                    <label for="objFileInput" class="file-input-label">📂 Load OBJ File</label>
+                </div>
+                <button onclick="createComplexModel()" id="complexBtn">🌟 Torus Knot</button>
+            </div>
+
+            <div class="control-group">
+                <label>🔄 Transformasi:</label>
+                <div>
+                    <label>Rotasi X: <span id="rotXValue">0</span>°</label>
+                    <input type="range" id="rotX" min="0" max="360" value="0" oninput="updateTransform()" />
+                </div>
+                <div>
+                    <label>Rotasi Y: <span id="rotYValue">0</span>°</label>
+                    <input type="range" id="rotY" min="0" max="360" value="0" oninput="updateTransform()" />
+                </div>
+                <div>
+                    <label>Rotasi Z: <span id="rotZValue">0</span>°</label>
+                    <input type="range" id="rotZ" min="0" max="360" value="0" oninput="updateTransform()" />
+                </div>
+                <div>
+                    <label>Scale: <span id="scaleValue">1.0</span></label>
+                    <input type="range" id="scale" min="0.1" max="3" step="0.1" value="1" oninput="updateTransform()" />
+                </div>
+                <div>
+                    <label>Posisi X: <span id="posXValue">0</span></label>
+                    <input type="range" id="posX" min="-5" max="5" step="0.1" value="0" oninput="updateTransform()" />
+                </div>
+                <div>
+                    <label>Posisi Y: <span id="posYValue">0</span></label>
+                    <input type="range" id="posY" min="-5" max="5" step="0.1" value="0" oninput="updateTransform()" />
+                </div>
+                <div>
+                    <label>Posisi Z: <span id="posZValue">0</span></label>
+                    <input type="range" id="posZ" min="-5" max="5" step="0.1" value="0" oninput="updateTransform()" />
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>💡 Pencahayaan:</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="ambientLight" checked onchange="toggleLighting()" />
+                        <label>Ambient</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="directionalLight" checked onchange="toggleLighting()" />
+                        <label>Directional</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="pointLight" onchange="toggleLighting()" />
+                        <label>Point</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="spotLight" onchange="toggleLighting()" />
+                        <label>Spot</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>🎥 Kamera:</label>
+                <button onclick="setCamera('perspective')" class="active" id="perspBtn">📐 Perspective</button>
+                <button onclick="setCamera('orthographic')" id="orthoBtn">📏 Orthographic</button>
+            </div>
+
+            <div class="control-group">
+                <label>🎨 Rendering:</label>
+                <button onclick="toggleWireframe()" id="wireframeBtn">🕸️ Wireframe</button>
+                <button onclick="toggleShadows()" id="shadowBtn" class="active">🌑 Shadows</button>
+            </div>
+        </div>
+
+        <div id="info">
+            <h4>📋 Informasi</h4>
+            <p><strong>Kontrol Mouse:</strong></p>
+            <p>• 🖱️ Klik kiri + drag: Rotasi kamera</p>
+            <p>• 🎯 Scroll: Zoom in/out</p>
+            <p>• 👆 Klik kanan + drag: Pan kamera</p>
+            <p><strong>Keyboard:</strong></p>
+            <p>• Keyboard: R=reset, Space=auto-rotate, 1-5=objek</p>
+            <p><strong>Fitur:</strong></p>
+            <p id="currentObject">Objek: Kubus</p>
+            <p id="currentCamera">Kamera: Perspective</p>
+            <p id="vertexCount">Vertices: 8</p>
+            <p id="faceCount">Faces: 6</p>
+            <p id="renderInfo">Render: Solid</p>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let scene, camera, renderer, currentObject;
+        let ambientLight, directionalLight, pointLight, spotLight;
+        let currentCameraType = "perspective";
+        let isWireframe = false;
+        let shadowsEnabled = true;
+        let autoRotate = true;
+        let mouseControls = {
+            isMouseDown: false,
+            mouseX: 0,
+            mouseY: 0,
+            cameraAngleX: 0,
+            cameraAngleY: 0,
+            cameraDistance: 8
+        };
+
+        // Initialize background animation
+        function initBackgroundAnimation() {
+            const bgAnimation = document.getElementById('bgAnimation');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                bgAnimation.appendChild(particle);
+            }
+        }
+
+        // Toggle mode dengan animasi
+        function toggleMode() {
+            const body = document.body;
+            const btn = document.getElementById("toggleModeBtn");
+            
+            body.style.transition = 'all 0.5s ease';
+            body.classList.toggle("light-mode");
+            
+            if (body.classList.contains("light-mode")) {
+                btn.textContent = "🌞 Light Mode";
+                if (scene) scene.background = new THREE.Color(0xf0f8ff);
+            } else {
+                btn.textContent = "🌙 Dark Mode";
+                if (scene) scene.background = new THREE.Color(0x0f0f23);
+            }
+        }
+
+        // Initialize the 3D application
+        function init() {
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0f0f23);
+            scene.fog = new THREE.Fog(0x0f0f23, 10, 50);
+
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(5, 5, 5);
+            camera.lookAt(0, 0, 0);
+
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ 
+                antialias: true, 
+                alpha: true,
+                powerPreference: "high-performance"
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.gammaOutput = true;
+            renderer.gammaFactor = 2.2;
+            
+            const rendererElement = renderer.domElement;
+            rendererElement.id = "renderer";
+            document.getElementById("container").appendChild(rendererElement);
+
+            // Setup lighting
+            setupLighting();
+
+            // Create ground plane
+            createGround();
+
+            // Create initial object (cube)
+            createCube();
+
+            // Setup controls
+            setupControls();
+            
+            // Setup keyboard controls
+            setupKeyboardControls();
+
+            // Start animation loop
+            animate();
+
+            // Handle window resize
+            window.addEventListener("resize", onWindowResize);
+
+            // Hide loading screen
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+            }, 1500);
+        }
+
+        function setupLighting() {
+            // Ambient Light
+            ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+
+            // Directional Light (Sun)
+            directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            directionalLight.shadow.camera.near = 0.5;
+            directionalLight.shadow.camera.far = 50;
+            directionalLight.shadow.camera.left = -10;
+            directionalLight.shadow.camera.right = 10;
+            directionalLight.shadow.camera.top = 10;
+            directionalLight.shadow.camera.bottom = -10;
+            scene.add(directionalLight);
+
+            // Point Light (movable)
+            pointLight = new THREE.PointLight(0xff6b6b, 1, 100);
+            pointLight.position.set(5, 5, 5);
+            pointLight.castShadow = true;
+            // Don't add to scene initially
+
+            // Spot Light
+            spotLight = new THREE.SpotLight(0x00ff00, 1, 100, Math.PI / 4, 0.5, 1);
+            spotLight.position.set(0, 10, 0);
+            spotLight.target.position.set(0, 0, 0);
+            spotLight.castShadow = true;
+            // Don't add to scene initially
+        }
+
+        function createGround() {
+            const groundGeometry = new THREE.PlaneGeometry(20, 20);
+            const groundMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x333333,
+                transparent: true,
+                opacity: 0.8
+            });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = -2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+        }
+
+        function setupControls() {
+            const canvas = renderer.domElement;
+
+            canvas.addEventListener("mousedown", onMouseDown);
+            canvas.addEventListener("mouseup", onMouseUp);
+            canvas.addEventListener("mousemove", onMouseMove);
+            canvas.addEventListener("wheel", onMouseWheel);
+            canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+
+            function onMouseDown(event) {
+                mouseControls.isMouseDown = true;
+                mouseControls.mouseX = event.clientX;
+                mouseControls.mouseY = event.clientY;
+                canvas.style.cursor = 'grabbing';
+            }
+
+            function onMouseUp() {
+                mouseControls.isMouseDown = false;
+                canvas.style.cursor = 'grab';
+            }
+
+            function onMouseMove(event) {
+                if (!mouseControls.isMouseDown) return;
+
+                const deltaX = event.clientX - mouseControls.mouseX;
+                const deltaY = event.clientY - mouseControls.mouseY;
+
+                if (event.button === 2) { // Right mouse button - pan
+                    const panSpeed = 0.01;
+                    camera.position.x -= deltaX * panSpeed;
+                    camera.position.y += deltaY * panSpeed;
+                } else { // Left mouse button - rotate
+                    mouseControls.cameraAngleY += deltaX * 0.01;
+                    mouseControls.cameraAngleX += deltaY * 0.01;
+                    mouseControls.cameraAngleX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, mouseControls.cameraAngleX));
+                    updateCameraPosition();
+                }
+
+                mouseControls.mouseX = event.clientX;
+                mouseControls.mouseY = event.clientY;
+            }
+
+            function onMouseWheel(event) {
+                mouseControls.cameraDistance += event.deltaY * 0.01;
+                mouseControls.cameraDistance = Math.max(2, Math.min(30, mouseControls.cameraDistance));
+                updateCameraPosition();
+            }
+
+            function updateCameraPosition() {
+                const x = mouseControls.cameraDistance * Math.cos(mouseControls.cameraAngleX) * Math.sin(mouseControls.cameraAngleY);
+                const y = mouseControls.cameraDistance * Math.sin(mouseControls.cameraAngleX);
+                const z = mouseControls.cameraDistance * Math.cos(mouseControls.cameraAngleX) * Math.cos(mouseControls.cameraAngleY);
+
+                camera.position.set(x, y, z);
+                camera.lookAt(0, 0, 0);
+            }
+
+            canvas.style.cursor = 'grab';
+        }
+
+        function setupKeyboardControls() {
+            document.addEventListener('keydown', (event) => {
+                switch(event.key.toLowerCase()) {
+                    case 'r':
+                        resetCamera();
+                        break;
+                    case ' ':
+                        event.preventDefault();
+                        autoRotate = !autoRotate;
+                        break;
+                    case '1':
+                        createCube();
+                        break;
+                    case '2':
+                        createPyramid();
+                        break;
+                    case '3':
+                        createSphere();
+                        break;
+                    case '4':
+                        createTorus();
+                        break;
+                    case '5':
+                        createComplexModel();
+                        break;
+                }
+            });
+        }
+
+        function resetCamera() {
+            mouseControls.cameraAngleX = 0;
+            mouseControls.cameraAngleY = 0;
+            mouseControls.cameraDistance = 8;
+            camera.position.set(5, 5, 5);
+            camera.lookAt(0, 0, 0);
+        }
+
+        function createCube() {
+            removeCurrentObject();
+            
+            const geometry = new THREE.BoxGeometry(2, 2, 2);
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x64b5f6,
+                shininess: 100,
+                specular: 0x222222,
+                wireframe: isWireframe
+            });
+
+            currentObject = new THREE.Mesh(geometry, material);
+            currentObject.castShadow = true;
+            currentObject.receiveShadow = true;
+            scene.add(currentObject);
+
+            updateObjectInfo("Kubus", 8, 6);
+            setActiveButton("cubeBtn");
+        }
+
+        function createPyramid() {
+            removeCurrentObject();
+            
+            const geometry = new THREE.ConeGeometry(1.5, 2.5, 4);
+            const material = new THREE.MeshPhongMaterial({
+                color: 0xf093fb,
+                shininess: 100,
+                specular: 0x222222,
+                wireframe: isWireframe
+            });
+
+            currentObject = new THREE.Mesh(geometry, material);
+            currentObject.castShadow = true;
+            currentObject.receiveShadow = true;
+            scene.add(currentObject);
+
+            updateObjectInfo("Piramida", 5, 4);
+            setActiveButton("pyramidBtn");
+        }
+
+        function createSphere() {
+            removeCurrentObject();
+            
+            const geometry = new THREE.SphereGeometry(1.5, 32, 16);
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x4ecdc4,
+                shininess: 100,
+                specular: 0x222222,
+                wireframe: isWireframe
+            });
+
+            currentObject = new THREE.Mesh(geometry, material);
+            currentObject.castShadow = true;
+            currentObject.receiveShadow = true;
+            scene.add(currentObject);
+
+            updateObjectInfo("Sphere", geometry.attributes.position.count, geometry.index.count / 3);
+            setActiveButton("sphereBtn");
+        }
+
+        function createTorus() {
+            removeCurrentObject();
+            
+            const geometry = new THREE.TorusGeometry(1.5, 0.5, 16, 100);
+            const material = new THREE.MeshPhongMaterial({
+                color: 0xff9800,
+                shininess: 100,
+                specular: 0x222222,
+                wireframe: isWireframe
+            });
+
+            currentObject = new THREE.Mesh(geometry, material);
+            currentObject.castShadow = true;
+            currentObject.receiveShadow = true;
+            scene.add(currentObject);
+
+            updateObjectInfo("Torus", geometry.attributes.position.count, geometry.index.count / 3);
+            setActiveButton("torusBtn");
+        }
+
+        function createComplexModel() {
+            removeCurrentObject();
+            
+            const geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16);
+            const material = new THREE.MeshPhongMaterial({
+                color: 0xe91e63,
+                shininess: 100,
+                specular: 0x222222,
+                wireframe: isWireframe
+            });
+
+            currentObject = new THREE.Mesh(geometry, material);
+            currentObject.castShadow = true;
+            currentObject.receiveShadow = true;
+            scene.add(currentObject);
+
+            updateObjectInfo("Torus Knot", geometry.attributes.position.count, geometry.index.count / 3);
+            setActiveButton("complexBtn");
+        }
+
+        function loadOBJFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    // Simple OBJ parser (basic implementation)
+                    const objData = e.target.result;
+                    const geometry = parseOBJ(objData);
+                    
+                    removeCurrentObject();
+                    
+                    const material = new THREE.MeshPhongMaterial({
+                        color: 0x00bcd4,
+                        shininess: 100,
+                        specular: 0x222222,
+                        wireframe: isWireframe
+                    });
+
+                    currentObject = new THREE.Mesh(geometry, material);
+                    currentObject.castShadow = true;
+                    currentObject.receiveShadow = true;
+                    scene.add(currentObject);
+
+                    updateObjectInfo("OBJ Model", geometry.attributes.position.count, geometry.index ? geometry.index.count / 3 : 0);
+                    setActiveButton("objBtn");
+                } catch (error) {
+                    alert("Error loading OBJ file: " + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function parseOBJ(objData) {
+            const vertices = [];
+            const faces = [];
+            const lines = objData.split('\n');
+
+            for (let line of lines) {
+                const parts = line.trim().split(/\s+/);
+                if (parts[0] === 'v') {
+                    vertices.push(
+                        parseFloat(parts[1]),
+                        parseFloat(parts[2]),
+                        parseFloat(parts[3])
+                    );
+                } else if (parts[0] === 'f') {
+                    // Simple face parsing (assuming triangular faces)
+                    for (let i = 1; i < parts.length - 2; i++) {
+                        faces.push(
+                            parseInt(parts[1].split('/')[0]) - 1,
+                            parseInt(parts[i + 1].split('/')[0]) - 1,
+                            parseInt(parts[i + 2].split('/')[0]) - 1
+                        );
+                    }
+                }
+            }
+
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            geometry.setIndex(faces);
+            geometry.computeVertexNormals();
+
+            return geometry;
+        }
+
+        function removeCurrentObject() {
+            if (currentObject) {
+                scene.remove(currentObject);
+                if (currentObject.geometry) currentObject.geometry.dispose();
+                if (currentObject.material) currentObject.material.dispose();
+            }
+        }
+
+        function updateTransform() {
+            if (!currentObject) return;
+
+            const rotX = document.getElementById("rotX").value;
+            const rotY = document.getElementById("rotY").value;
+            const rotZ = document.getElementById("rotZ").value;
+            const scale = document.getElementById("scale").value;
+            const posX = document.getElementById("posX").value;
+            const posY = document.getElementById("posY").value;
+            const posZ = document.getElementById("posZ").value;
+
+            currentObject.rotation.x = (rotX * Math.PI) / 180;
+            currentObject.rotation.y = (rotY * Math.PI) / 180;
+            currentObject.rotation.z = (rotZ * Math.PI) / 180;
+            currentObject.scale.setScalar(scale);
+            currentObject.position.set(posX, posY, posZ);
+
+            // Update display values
+            document.getElementById("rotXValue").textContent = rotX;
+            document.getElementById("rotYValue").textContent = rotY;
+            document.getElementById("rotZValue").textContent = rotZ;
+            document.getElementById("scaleValue").textContent = parseFloat(scale).toFixed(1);
+            document.getElementById("posXValue").textContent = parseFloat(posX).toFixed(1);
+            document.getElementById("posYValue").textContent = parseFloat(posY).toFixed(1);
+            document.getElementById("posZValue").textContent = parseFloat(posZ).toFixed(1);
+        }
+
+        function toggleLighting() {
+            const ambient = document.getElementById("ambientLight").checked;
+            const directional = document.getElementById("directionalLight").checked;
+            const point = document.getElementById("pointLight").checked;
+            const spot = document.getElementById("spotLight").checked;
+
+            ambientLight.visible = ambient;
+            directionalLight.visible = directional;
+
+            if (point && !scene.children.includes(pointLight)) {
+                scene.add(pointLight);
+            } else if (!point && scene.children.includes(pointLight)) {
+                scene.remove(pointLight);
+            }
+
+            if (spot && !scene.children.includes(spotLight)) {
+                scene.add(spotLight);
+                scene.add(spotLight.target);
+            } else if (!spot && scene.children.includes(spotLight)) {
+                scene.remove(spotLight);
+                scene.remove(spotLight.target);
+            }
+        }
+
+        function setCamera(type) {
+            const aspect = window.innerWidth / window.innerHeight;
+            const currentPos = camera.position.clone();
+
+            if (type === "perspective") {
+                camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
+                currentCameraType = "perspective";
+                setActiveButton("perspBtn");
+                document.getElementById("currentCamera").textContent = "Kamera: Perspective";
+            } else {
+                const frustumSize = 5;
+                camera = new THREE.OrthographicCamera(
+                    (frustumSize * aspect) / -2, 
+                    (frustumSize * aspect) / 2, 
+                    frustumSize / 2, 
+                    frustumSize / -2, 
+                    0.1, 
+                    1000
+                );
+                currentCameraType = "orthographic";
+                setActiveButton("orthoBtn");
+                document.getElementById("currentCamera").textContent = "Kamera: Orthographic";
+            }
+
+            camera.position.copy(currentPos);
+            camera.lookAt(0, 0, 0);
+        }
+
+        function toggleWireframe() {
+            isWireframe = !isWireframe;
+            if (currentObject && currentObject.material) {
+                currentObject.material.wireframe = isWireframe;
+            }
+            
+            const btn = document.getElementById("wireframeBtn");
+            if (isWireframe) {
+                btn.classList.add("active");
+                document.getElementById("renderInfo").textContent = "Render: Wireframe";
+            } else {
+                btn.classList.remove("active");
+                document.getElementById("renderInfo").textContent = "Render: Solid";
+            }
+        }
+
+        function toggleShadows() {
+            shadowsEnabled = !shadowsEnabled;
+            renderer.shadowMap.enabled = shadowsEnabled;
+            
+            const btn = document.getElementById("shadowBtn");
+            if (shadowsEnabled) {
+                btn.classList.add("active");
+            } else {
+                btn.classList.remove("active");
+            }
+        }
+
+        function setActiveButton(activeId) {
+            // Remove active class from object buttons
+            const objectButtons = ["cubeBtn", "pyramidBtn", "sphereBtn", "torusBtn", "complexBtn", "objBtn"];
+            objectButtons.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.classList.remove("active");
+            });
+            
+            // Add active class to current button
+            const activeBtn = document.getElementById(activeId);
+            if (activeBtn) activeBtn.classList.add("active");
+        }
+
+        function updateObjectInfo(name, vertexCount, faceCount) {
+            document.getElementById("currentObject").textContent = `Objek: ${name}`;
+            document.getElementById("vertexCount").textContent = `Vertices: ${vertexCount}`;
+            document.getElementById("faceCount").textContent = `Faces: ${Math.floor(faceCount)}`;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Auto-rotate object
+            if (currentObject && autoRotate) {
+                currentObject.rotation.y += 0.005;
+            }
+
+            // Animate point light position
+            if (pointLight && scene.children.includes(pointLight)) {
+                const time = Date.now() * 0.002;
+                pointLight.position.x = Math.cos(time) * 4;
+                pointLight.position.z = Math.sin(time) * 4;
+                pointLight.position.y = 3 + Math.sin(time * 2) * 1;
+            }
+
+            // Animate spot light target
+            if (spotLight && scene.children.includes(spotLight)) {
+                const time = Date.now() * 0.001;
+                spotLight.target.position.x = Math.cos(time) * 2;
+                spotLight.target.position.z = Math.sin(time) * 2;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            if (currentCameraType === "perspective") {
+                camera.aspect = window.innerWidth / window.innerHeight;
+            } else {
+                const aspect = window.innerWidth / window.innerHeight;
+                const frustumSize = 5;
+                camera.left = (frustumSize * aspect) / -2;
+                camera.right = (frustumSize * aspect) / 2;
+                camera.top = frustumSize / 2;
+                camera.bottom = frustumSize / -2;
+            }
+
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Initialize everything when page loads
+        window.addEventListener("load", () => {
+            initBackgroundAnimation();
+            init();
+        });
+    </script>
+</body>
+</html>

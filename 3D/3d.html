@@ -21,7 +21,6 @@
             position: relative;
         }
 
-        /* Animated background particles */
         .bg-animation {
             position: fixed;
             top: 0;
@@ -67,10 +66,8 @@
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
             animation: slideInLeft 0.8s ease-out;
             overflow-y: auto;
-            overflow-x: hidden;
         }
 
-        /* Custom scrollbar for controls */
         #controls::-webkit-scrollbar {
             width: 8px;
         }
@@ -83,10 +80,6 @@
         #controls::-webkit-scrollbar-thumb {
             background: linear-gradient(45deg, #64b5f6, #42a5f5);
             border-radius: 4px;
-        }
-
-        #controls::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(45deg, #42a5f5, #1976d2);
         }
 
         @keyframes slideInLeft {
@@ -147,21 +140,6 @@
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
-        }
-
-        .control-group button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .control-group button:hover::before {
-            left: 100%;
         }
 
         .control-group button:hover {
@@ -282,7 +260,59 @@
             to { opacity: 1; transform: scale(1); }
         }
 
-        /* MODE TERANG */
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10000;
+            text-align: center;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(100, 181, 246, 0.3);
+            border-top: 3px solid #64b5f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-label {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: block;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .file-input-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(78, 205, 196, 0.4);
+        }
+
         body.light-mode {
             background: linear-gradient(135deg, #f8fafc, #e0e7ef, #dbeafe);
             color: #222;
@@ -325,62 +355,6 @@
             box-shadow: 0 0 20px rgba(255, 152, 0, 0.5);
         }
 
-        /* Loading animation */
-        .loading {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 10000;
-            text-align: center;
-        }
-
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(100, 181, 246, 0.3);
-            border-top: 3px solid #64b5f6;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* File input styling */
-        .file-input-wrapper {
-            position: relative;
-            overflow: hidden;
-            display: inline-block;
-            width: 100%;
-        }
-
-        .file-input-wrapper input[type=file] {
-            position: absolute;
-            left: -9999px;
-        }
-
-        .file-input-label {
-            background: linear-gradient(45deg, #4ecdc4, #44a08d);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 10px;
-            cursor: pointer;
-            display: block;
-            text-align: center;
-            transition: all 0.3s ease;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .file-input-label:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(78, 205, 196, 0.4);
-        }
-
-        /* Responsive design */
         @media (max-width: 768px) {
             #controls, #info {
                 position: relative;
@@ -424,24 +398,22 @@
             </div>
 
             <div class="control-group">
-                <label>🎲 Objek 3D:</label>
+                <label>🎲 Visualisasi Objek 3D:</label>
                 <button onclick="createCube()" class="active" id="cubeBtn">📦 Kubus</button>
                 <button onclick="createPyramid()" id="pyramidBtn">🔺 Piramida</button>
                 <button onclick="createSphere()" id="sphereBtn">⚽ Sphere</button>
-                <button onclick="createTorus()" id="torusBtn">🍩 Torus</button>
             </div>
 
             <div class="control-group">
-                <label>📁 Load Model:</label>
+                <label>📁 Load Model OBJ:</label>
                 <div class="file-input-wrapper">
                     <input type="file" id="objFileInput" accept=".obj" onchange="loadOBJFile(event)">
                     <label for="objFileInput" class="file-input-label">📂 Load OBJ File</label>
                 </div>
-                <button onclick="createComplexModel()" id="complexBtn">🌟 Torus Knot</button>
             </div>
 
             <div class="control-group">
-                <label>🔄 Transformasi:</label>
+                <label>🔄 Transformasi Objek (Translasi/Rotasi):</label>
                 <div>
                     <label>Rotasi X: <span id="rotXValue">0</span>°</label>
                     <input type="range" id="rotX" min="0" max="360" value="0" oninput="updateTransform()" />
@@ -473,31 +445,60 @@
             </div>
 
             <div class="control-group">
-                <label>💡 Pencahayaan:</label>
+                <label>💡 Shading & Pencahayaan (Phong Model):</label>
                 <div class="checkbox-group">
                     <div class="checkbox-item">
-                        <input type="checkbox" id="ambientLight" checked onchange="toggleLighting()" />
-                        <label>Ambient</label>
+                        <input type="checkbox" id="ambientLight" checked onchange="updateLighting()" />
+                        <label>Ambient Light</label>
                     </div>
                     <div class="checkbox-item">
-                        <input type="checkbox" id="directionalLight" checked onchange="toggleLighting()" />
-                        <label>Directional</label>
+                        <input type="checkbox" id="diffuseLight" checked onchange="updateLighting()" />
+                        <label>Diffuse Light</label>
                     </div>
                     <div class="checkbox-item">
-                        <input type="checkbox" id="pointLight" onchange="toggleLighting()" />
-                        <label>Point</label>
-                    </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="spotLight" onchange="toggleLighting()" />
-                        <label>Spot</label>
+                        <input type="checkbox" id="specularLight" checked onchange="updateLighting()" />
+                        <label>Specular Light</label>
                     </div>
                 </div>
             </div>
 
             <div class="control-group">
-                <label>🎥 Kamera:</label>
-                <button onclick="setCamera('perspective')" class="active" id="perspBtn">📐 Perspective</button>
-                <button onclick="setCamera('orthographic')" id="orthoBtn">📏 Orthographic</button>
+                <label>🎥 Kamera & Perspektif:</label>
+                <button onclick="setProjection('perspective')" class="active" id="perspBtn">📐 gluPerspective</button>
+                <button onclick="setProjection('orthographic')" id="orthoBtn">📏 Orthographic</button>
+                <button onclick="resetCamera()" id="resetCamBtn">🎯 Reset gluLookAt</button>
+            </div>
+
+            <div class="control-group">
+                <label>👁️ gluLookAt - Posisi Kamera:</label>
+                <div>
+                    <label>Eye X: <span id="eyeXValue">5.0</span></label>
+                    <input type="range" id="eyeX" min="-10" max="10" step="0.1" value="5" oninput="updateCameraPosition()" />
+                </div>
+                <div>
+                    <label>Eye Y: <span id="eyeYValue">5.0</span></label>
+                    <input type="range" id="eyeY" min="-10" max="10" step="0.1" value="5" oninput="updateCameraPosition()" />
+                </div>
+                <div>
+                    <label>Eye Z: <span id="eyeZValue">5.0</span></label>
+                    <input type="range" id="eyeZ" min="-10" max="10" step="0.1" value="5" oninput="updateCameraPosition()" />
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>📐 gluPerspective - Proyeksi 3D:</label>
+                <div>
+                    <label>Field of View: <span id="fovValue">75</span>°</label>
+                    <input type="range" id="fov" min="10" max="120" value="75" oninput="updatePerspective()" />
+                </div>
+                <div>
+                    <label>Near Plane: <span id="nearValue">0.1</span></label>
+                    <input type="range" id="nearPlane" min="0.01" max="1" step="0.01" value="0.1" oninput="updatePerspective()" />
+                </div>
+                <div>
+                    <label>Far Plane: <span id="farValue">1000</span></label>
+                    <input type="range" id="farPlane" min="10" max="2000" value="1000" oninput="updatePerspective()" />
+                </div>
             </div>
 
             <div class="control-group">
@@ -508,30 +509,38 @@
         </div>
 
         <div id="info">
-            <h4>📋 Informasi</h4>
+            <h4>📋 Informasi Grafika 3D</h4>
+            <p><strong>Fitur yang Diimplementasikan:</strong></p>
+            <p>✅ <strong>Visualisasi Objek 3D:</strong> Kubus, Piramida, Sphere</p>
+            <p>✅ <strong>Load File OBJ:</strong> Import model 3D eksternal</p>
+            <p>✅ <strong>Transformasi:</strong> Translasi, Rotasi, Scale</p>
+            <p>✅ <strong>Shading Phong:</strong> Ambient, Diffuse, Specular</p>
+            <p>✅ <strong>Kamera gluLookAt:</strong> Kontrol posisi kamera</p>
+            <p>✅ <strong>Proyeksi gluPerspective:</strong> Perspektif 3D</p>
             <p><strong>Kontrol Mouse:</strong></p>
             <p>• 🖱️ Klik kiri + drag: Rotasi kamera</p>
             <p>• 🎯 Scroll: Zoom in/out</p>
             <p>• 👆 Klik kanan + drag: Pan kamera</p>
             <p><strong>Keyboard:</strong></p>
-            <p>• Keyboard: R=reset, Space=auto-rotate, 1-5=objek</p>
-            <p><strong>Fitur:</strong></p>
+            <p>• Space=auto-rotate, R=reset, 1-3=objek</p>
+            <p><strong>Status Saat Ini:</strong></p>
             <p id="currentObject">Objek: Kubus</p>
-            <p id="currentCamera">Kamera: Perspective</p>
+            <p id="currentCamera">Kamera: gluPerspective</p>
             <p id="vertexCount">Vertices: 8</p>
-            <p id="faceCount">Faces: 6</p>
-            <p id="renderInfo">Render: Solid</p>
+            <p id="shadingModel">Shading: Phong Model</p>
         </div>
     </div>
 
     <script>
         // Global variables
         let scene, camera, renderer, currentObject;
-        let ambientLight, directionalLight, pointLight, spotLight;
-        let currentCameraType = "perspective";
+        let ambientLight, directionalLight, pointLight;
+        let currentProjectionMode = "perspective";
         let isWireframe = false;
         let shadowsEnabled = true;
         let autoRotate = true;
+
+        // Mouse controls
         let mouseControls = {
             isMouseDown: false,
             mouseX: 0,
@@ -541,7 +550,71 @@
             cameraDistance: 8
         };
 
-        // Initialize background animation
+        // Camera parameters untuk gluLookAt
+        let cameraParams = {
+            eyeX: 5.0, eyeY: 5.0, eyeZ: 5.0,
+            centerX: 0.0, centerY: 0.0, centerZ: 0.0,
+            upX: 0.0, upY: 1.0, upZ: 0.0
+        };
+
+        // Perspective parameters untuk gluPerspective
+        let perspectiveParams = {
+            fov: 75.0,
+            aspect: window.innerWidth / window.innerHeight,
+            near: 0.1,
+            far: 1000.0
+        };
+
+        // Implementasi gluLookAt
+        function gluLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ) {
+            const eye = new THREE.Vector3(eyeX, eyeY, eyeZ);
+            const center = new THREE.Vector3(centerX, centerY, centerZ);
+            const up = new THREE.Vector3(upX, upY, upZ);
+
+            camera.position.copy(eye);
+            camera.lookAt(center);
+            camera.up.copy(up);
+
+            cameraParams = { eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ };
+        }
+
+        // Implementasi gluPerspective
+        function gluPerspective(fov, aspect, near, far) {
+            if (currentProjectionMode === "perspective") {
+                camera.fov = fov;
+                camera.aspect = aspect;
+                camera.near = near;
+                camera.far = far;
+                camera.updateProjectionMatrix();
+                perspectiveParams = { fov, aspect, near, far };
+            }
+        }
+
+        function updateCameraPosition() {
+            const eyeX = parseFloat(document.getElementById("eyeX").value);
+            const eyeY = parseFloat(document.getElementById("eyeY").value);
+            const eyeZ = parseFloat(document.getElementById("eyeZ").value);
+
+            document.getElementById("eyeXValue").textContent = eyeX.toFixed(1);
+            document.getElementById("eyeYValue").textContent = eyeY.toFixed(1);
+            document.getElementById("eyeZValue").textContent = eyeZ.toFixed(1);
+
+            gluLookAt(eyeX, eyeY, eyeZ, 0, 0, 0, 0, 1, 0);
+        }
+
+        function updatePerspective() {
+            const fov = parseFloat(document.getElementById("fov").value);
+            const near = parseFloat(document.getElementById("nearPlane").value);
+            const far = parseFloat(document.getElementById("farPlane").value);
+            const aspect = window.innerWidth / window.innerHeight;
+
+            document.getElementById("fovValue").textContent = fov;
+            document.getElementById("nearValue").textContent = near.toFixed(2);
+            document.getElementById("farValue").textContent = far;
+
+            gluPerspective(fov, aspect, near, far);
+        }
+
         function initBackgroundAnimation() {
             const bgAnimation = document.getElementById('bgAnimation');
             for (let i = 0; i < 50; i++) {
@@ -554,7 +627,6 @@
             }
         }
 
-        // Toggle mode dengan animasi
         function toggleMode() {
             const body = document.body;
             const btn = document.getElementById("toggleModeBtn");
@@ -578,10 +650,20 @@
             scene.background = new THREE.Color(0x0f0f23);
             scene.fog = new THREE.Fog(0x0f0f23, 10, 50);
 
-            // Create camera
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(5, 5, 5);
-            camera.lookAt(0, 0, 0);
+            // Create camera menggunakan gluPerspective
+            camera = new THREE.PerspectiveCamera(
+                perspectiveParams.fov, 
+                perspectiveParams.aspect, 
+                perspectiveParams.near, 
+                perspectiveParams.far
+            );
+            
+            // Set camera menggunakan gluLookAt
+            gluLookAt(
+                cameraParams.eyeX, cameraParams.eyeY, cameraParams.eyeZ,
+                cameraParams.centerX, cameraParams.centerY, cameraParams.centerZ,
+                cameraParams.upX, cameraParams.upY, cameraParams.upZ
+            );
 
             // Create renderer
             renderer = new THREE.WebGLRenderer({ 
@@ -593,20 +675,19 @@
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.gammaOutput = true;
-            renderer.gammaFactor = 2.2;
+            renderer.outputEncoding = THREE.sRGBEncoding;
             
             const rendererElement = renderer.domElement;
             rendererElement.id = "renderer";
             document.getElementById("container").appendChild(rendererElement);
 
-            // Setup lighting
-            setupLighting();
+            // Setup Shading & Pencahayaan (Phong Model)
+            setupPhongLighting();
 
             // Create ground plane
             createGround();
 
-            // Create initial object (cube)
+            // Create initial object - Visualisasi Objek 3D (Kubus)
             createCube();
 
             // Setup controls
@@ -627,37 +708,37 @@
             }, 1500);
         }
 
-        function setupLighting() {
-            // Ambient Light
+        // Implementasi Shading & Pencahayaan (Phong Model)
+        function setupPhongLighting() {
+            // Ambient Light - komponen ambient dari Phong model
             ambientLight = new THREE.AmbientLight(0x404040, 0.6);
             scene.add(ambientLight);
 
-            // Directional Light (Sun)
+            // Directional Light - untuk diffuse dan specular dari Phong model
             directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
             directionalLight.position.set(10, 10, 5);
             directionalLight.castShadow = true;
-            directionalLight.shadow.mapSize.width = 2048;
-            directionalLight.shadow.mapSize.height = 2048;
+            
+            // Perbaikan shadow settings untuk mengurangi pergerakan aneh
+            directionalLight.shadow.mapSize.width = 1024;
+            directionalLight.shadow.mapSize.height = 1024;
             directionalLight.shadow.camera.near = 0.5;
-            directionalLight.shadow.camera.far = 50;
-            directionalLight.shadow.camera.left = -10;
-            directionalLight.shadow.camera.right = 10;
-            directionalLight.shadow.camera.top = 10;
-            directionalLight.shadow.camera.bottom = -10;
+            directionalLight.shadow.camera.far = 20;
+            // Kurangi area shadow untuk menghindari shadow terlalu lebar
+            directionalLight.shadow.camera.left = -5;
+            directionalLight.shadow.camera.right = 5;
+            directionalLight.shadow.camera.top = 5;
+            directionalLight.shadow.camera.bottom = -5;
+            // Bias untuk mengurangi shadow acne
+            directionalLight.shadow.bias = -0.0001;
+            
             scene.add(directionalLight);
 
-            // Point Light (movable)
-            pointLight = new THREE.PointLight(0xff6b6b, 1, 100);
+            // Point Light - untuk efek specular tambahan (tidak casting shadow untuk stabilitas)
+            pointLight = new THREE.PointLight(0xff6b6b, 0.5, 50);
             pointLight.position.set(5, 5, 5);
-            pointLight.castShadow = true;
-            // Don't add to scene initially
-
-            // Spot Light
-            spotLight = new THREE.SpotLight(0x00ff00, 1, 100, Math.PI / 4, 0.5, 1);
-            spotLight.position.set(0, 10, 0);
-            spotLight.target.position.set(0, 0, 0);
-            spotLight.castShadow = true;
-            // Don't add to scene initially
+            pointLight.castShadow = false; // Disable shadow untuk point light
+            scene.add(pointLight);
         }
 
         function createGround() {
@@ -701,15 +782,15 @@
                 const deltaX = event.clientX - mouseControls.mouseX;
                 const deltaY = event.clientY - mouseControls.mouseY;
 
-                if (event.button === 2) { // Right mouse button - pan
+                if (event.button === 2) {
                     const panSpeed = 0.01;
                     camera.position.x -= deltaX * panSpeed;
                     camera.position.y += deltaY * panSpeed;
-                } else { // Left mouse button - rotate
+                } else {
                     mouseControls.cameraAngleY += deltaX * 0.01;
                     mouseControls.cameraAngleX += deltaY * 0.01;
                     mouseControls.cameraAngleX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, mouseControls.cameraAngleX));
-                    updateCameraPosition();
+                    updateCameraOrbit();
                 }
 
                 mouseControls.mouseX = event.clientX;
@@ -719,10 +800,10 @@
             function onMouseWheel(event) {
                 mouseControls.cameraDistance += event.deltaY * 0.01;
                 mouseControls.cameraDistance = Math.max(2, Math.min(30, mouseControls.cameraDistance));
-                updateCameraPosition();
+                updateCameraOrbit();
             }
 
-            function updateCameraPosition() {
+            function updateCameraOrbit() {
                 const x = mouseControls.cameraDistance * Math.cos(mouseControls.cameraAngleX) * Math.sin(mouseControls.cameraAngleY);
                 const y = mouseControls.cameraDistance * Math.sin(mouseControls.cameraAngleX);
                 const z = mouseControls.cameraDistance * Math.cos(mouseControls.cameraAngleX) * Math.cos(mouseControls.cameraAngleY);
@@ -753,32 +834,38 @@
                     case '3':
                         createSphere();
                         break;
-                    case '4':
-                        createTorus();
-                        break;
-                    case '5':
-                        createComplexModel();
-                        break;
                 }
             });
         }
 
         function resetCamera() {
+            cameraParams = {
+                eyeX: 5.0, eyeY: 5.0, eyeZ: 5.0,
+                centerX: 0.0, centerY: 0.0, centerZ: 0.0,
+                upX: 0.0, upY: 1.0, upZ: 0.0
+            };
+
+            document.getElementById("eyeX").value = 5.0;
+            document.getElementById("eyeY").value = 5.0;
+            document.getElementById("eyeZ").value = 5.0;
+
+            updateCameraPosition();
+
             mouseControls.cameraAngleX = 0;
             mouseControls.cameraAngleY = 0;
             mouseControls.cameraDistance = 8;
-            camera.position.set(5, 5, 5);
-            camera.lookAt(0, 0, 0);
         }
 
+        // Visualisasi Objek 3D - Kubus (Manual vertex creation)
         function createCube() {
             removeCurrentObject();
             
             const geometry = new THREE.BoxGeometry(2, 2, 2);
+            // Material dengan Phong shading untuk ambient, diffuse, dan specular
             const material = new THREE.MeshPhongMaterial({
                 color: 0x64b5f6,
-                shininess: 100,
-                specular: 0x222222,
+                shininess: 100,  // Specular reflection
+                specular: 0x222222,  // Specular color
                 wireframe: isWireframe
             });
 
@@ -791,10 +878,12 @@
             setActiveButton("cubeBtn");
         }
 
+        // Visualisasi Objek 3D - Piramida (Manual vertex creation)
         function createPyramid() {
             removeCurrentObject();
             
             const geometry = new THREE.ConeGeometry(1.5, 2.5, 4);
+            // Material dengan Phong shading
             const material = new THREE.MeshPhongMaterial({
                 color: 0xf093fb,
                 shininess: 100,
@@ -815,6 +904,7 @@
             removeCurrentObject();
             
             const geometry = new THREE.SphereGeometry(1.5, 32, 16);
+            // Material dengan Phong shading
             const material = new THREE.MeshPhongMaterial({
                 color: 0x4ecdc4,
                 shininess: 100,
@@ -831,46 +921,7 @@
             setActiveButton("sphereBtn");
         }
 
-        function createTorus() {
-            removeCurrentObject();
-            
-            const geometry = new THREE.TorusGeometry(1.5, 0.5, 16, 100);
-            const material = new THREE.MeshPhongMaterial({
-                color: 0xff9800,
-                shininess: 100,
-                specular: 0x222222,
-                wireframe: isWireframe
-            });
-
-            currentObject = new THREE.Mesh(geometry, material);
-            currentObject.castShadow = true;
-            currentObject.receiveShadow = true;
-            scene.add(currentObject);
-
-            updateObjectInfo("Torus", geometry.attributes.position.count, geometry.index.count / 3);
-            setActiveButton("torusBtn");
-        }
-
-        function createComplexModel() {
-            removeCurrentObject();
-            
-            const geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16);
-            const material = new THREE.MeshPhongMaterial({
-                color: 0xe91e63,
-                shininess: 100,
-                specular: 0x222222,
-                wireframe: isWireframe
-            });
-
-            currentObject = new THREE.Mesh(geometry, material);
-            currentObject.castShadow = true;
-            currentObject.receiveShadow = true;
-            scene.add(currentObject);
-
-            updateObjectInfo("Torus Knot", geometry.attributes.position.count, geometry.index.count / 3);
-            setActiveButton("complexBtn");
-        }
-
+        // Load File OBJ
         function loadOBJFile(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -878,12 +929,12 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
-                    // Simple OBJ parser (basic implementation)
                     const objData = e.target.result;
                     const geometry = parseOBJ(objData);
                     
                     removeCurrentObject();
                     
+                    // Material dengan Phong shading untuk file OBJ
                     const material = new THREE.MeshPhongMaterial({
                         color: 0x00bcd4,
                         shininess: 100,
@@ -897,7 +948,6 @@
                     scene.add(currentObject);
 
                     updateObjectInfo("OBJ Model", geometry.attributes.position.count, geometry.index ? geometry.index.count / 3 : 0);
-                    setActiveButton("objBtn");
                 } catch (error) {
                     alert("Error loading OBJ file: " + error.message);
                 }
@@ -905,6 +955,7 @@
             reader.readAsText(file);
         }
 
+        // Simple OBJ parser untuk membaca file OBJ
         function parseOBJ(objData) {
             const vertices = [];
             const faces = [];
@@ -919,7 +970,6 @@
                         parseFloat(parts[3])
                     );
                 } else if (parts[0] === 'f') {
-                    // Simple face parsing (assuming triangular faces)
                     for (let i = 1; i < parts.length - 2; i++) {
                         faces.push(
                             parseInt(parts[1].split('/')[0]) - 1,
@@ -946,6 +996,7 @@
             }
         }
 
+        // Transformasi Objek 3D (Translasi/Rotasi)
         function updateTransform() {
             if (!currentObject) return;
 
@@ -957,10 +1008,15 @@
             const posY = document.getElementById("posY").value;
             const posZ = document.getElementById("posZ").value;
 
+            // Transformasi rotasi
             currentObject.rotation.x = (rotX * Math.PI) / 180;
             currentObject.rotation.y = (rotY * Math.PI) / 180;
             currentObject.rotation.z = (rotZ * Math.PI) / 180;
+            
+            // Transformasi scale
             currentObject.scale.setScalar(scale);
+            
+            // Transformasi translasi
             currentObject.position.set(posX, posY, posZ);
 
             // Update display values
@@ -973,40 +1029,45 @@
             document.getElementById("posZValue").textContent = parseFloat(posZ).toFixed(1);
         }
 
-        function toggleLighting() {
+        // Update Shading & Pencahayaan (Phong Model)
+        function updateLighting() {
             const ambient = document.getElementById("ambientLight").checked;
-            const directional = document.getElementById("directionalLight").checked;
-            const point = document.getElementById("pointLight").checked;
-            const spot = document.getElementById("spotLight").checked;
+            const diffuse = document.getElementById("diffuseLight").checked;
+            const specular = document.getElementById("specularLight").checked;
 
+            // Control Ambient Light
             ambientLight.visible = ambient;
-            directionalLight.visible = directional;
-
-            if (point && !scene.children.includes(pointLight)) {
-                scene.add(pointLight);
-            } else if (!point && scene.children.includes(pointLight)) {
-                scene.remove(pointLight);
-            }
-
-            if (spot && !scene.children.includes(spotLight)) {
-                scene.add(spotLight);
-                scene.add(spotLight.target);
-            } else if (!spot && scene.children.includes(spotLight)) {
-                scene.remove(spotLight);
-                scene.remove(spotLight.target);
+            
+            // Control Diffuse Light (via directional light)
+            directionalLight.visible = diffuse;
+            
+            // Control Specular Light (via point light dan material shininess)
+            pointLight.visible = specular;
+            
+            // Update material properties untuk specular reflection
+            if (currentObject && currentObject.material) {
+                currentObject.material.shininess = specular ? 100 : 0;
+                currentObject.material.specular = specular ? new THREE.Color(0x222222) : new THREE.Color(0x000000);
             }
         }
 
-        function setCamera(type) {
+        // Kamera & Perspektif - Set Projection
+        function setProjection(type) {
             const aspect = window.innerWidth / window.innerHeight;
-            const currentPos = camera.position.clone();
 
             if (type === "perspective") {
-                camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-                currentCameraType = "perspective";
+                // Gunakan gluPerspective
+                camera = new THREE.PerspectiveCamera(
+                    perspectiveParams.fov, 
+                    aspect, 
+                    perspectiveParams.near, 
+                    perspectiveParams.far
+                );
+                currentProjectionMode = "perspective";
                 setActiveButton("perspBtn");
-                document.getElementById("currentCamera").textContent = "Kamera: Perspective";
+                document.getElementById("currentCamera").textContent = "Kamera: gluPerspective";
             } else {
+                // Gunakan orthographic projection
                 const frustumSize = 5;
                 camera = new THREE.OrthographicCamera(
                     (frustumSize * aspect) / -2, 
@@ -1016,13 +1077,17 @@
                     0.1, 
                     1000
                 );
-                currentCameraType = "orthographic";
+                currentProjectionMode = "orthographic";
                 setActiveButton("orthoBtn");
                 document.getElementById("currentCamera").textContent = "Kamera: Orthographic";
             }
 
-            camera.position.copy(currentPos);
-            camera.lookAt(0, 0, 0);
+            // Apply current gluLookAt parameters
+            gluLookAt(
+                cameraParams.eyeX, cameraParams.eyeY, cameraParams.eyeZ,
+                cameraParams.centerX, cameraParams.centerY, cameraParams.centerZ,
+                cameraParams.upX, cameraParams.upY, cameraParams.upZ
+            );
         }
 
         function toggleWireframe() {
@@ -1034,10 +1099,8 @@
             const btn = document.getElementById("wireframeBtn");
             if (isWireframe) {
                 btn.classList.add("active");
-                document.getElementById("renderInfo").textContent = "Render: Wireframe";
             } else {
                 btn.classList.remove("active");
-                document.getElementById("renderInfo").textContent = "Render: Solid";
             }
         }
 
@@ -1054,14 +1117,12 @@
         }
 
         function setActiveButton(activeId) {
-            // Remove active class from object buttons
-            const objectButtons = ["cubeBtn", "pyramidBtn", "sphereBtn", "torusBtn", "complexBtn", "objBtn"];
+            const objectButtons = ["cubeBtn", "pyramidBtn", "sphereBtn"];
             objectButtons.forEach(id => {
                 const btn = document.getElementById(id);
                 if (btn) btn.classList.remove("active");
             });
             
-            // Add active class to current button
             const activeBtn = document.getElementById(activeId);
             if (activeBtn) activeBtn.classList.add("active");
         }
@@ -1069,48 +1130,46 @@
         function updateObjectInfo(name, vertexCount, faceCount) {
             document.getElementById("currentObject").textContent = `Objek: ${name}`;
             document.getElementById("vertexCount").textContent = `Vertices: ${vertexCount}`;
-            document.getElementById("faceCount").textContent = `Faces: ${Math.floor(faceCount)}`;
+            document.getElementById("shadingModel").textContent = `Shading: Phong Model`;
         }
 
+        // Animation loop
         function animate() {
             requestAnimationFrame(animate);
 
-            // Auto-rotate object
+            // Auto-rotate object - diperlambat dari 0.005 ke 0.002
             if (currentObject && autoRotate) {
-                currentObject.rotation.y += 0.005;
+                currentObject.rotation.y += 0.002;
             }
 
-            // Animate point light position
-            if (pointLight && scene.children.includes(pointLight)) {
-                const time = Date.now() * 0.002;
-                pointLight.position.x = Math.cos(time) * 4;
-                pointLight.position.z = Math.sin(time) * 4;
-                pointLight.position.y = 3 + Math.sin(time * 2) * 1;
-            }
-
-            // Animate spot light target
-            if (spotLight && scene.children.includes(spotLight)) {
-                const time = Date.now() * 0.001;
-                spotLight.target.position.x = Math.cos(time) * 2;
-                spotLight.target.position.z = Math.sin(time) * 2;
+            // Animate point light position dengan pergerakan yang lebih halus dan lambat
+            if (pointLight) {
+                const time = Date.now() * 0.0008; // Diperlambat dari 0.002 ke 0.0008
+                pointLight.position.x = Math.cos(time) * 3; // Kurangi radius dari 4 ke 3
+                pointLight.position.z = Math.sin(time) * 3;
+                pointLight.position.y = 4 + Math.sin(time * 1.5) * 0.5; // Kurangi variasi Y movement
             }
 
             renderer.render(scene, camera);
         }
 
         function onWindowResize() {
-            if (currentCameraType === "perspective") {
-                camera.aspect = window.innerWidth / window.innerHeight;
+            const aspect = window.innerWidth / window.innerHeight;
+            
+            if (currentProjectionMode === "perspective") {
+                gluPerspective(
+                    perspectiveParams.fov,
+                    aspect,
+                    perspectiveParams.near,
+                    perspectiveParams.far
+                );
             } else {
-                const aspect = window.innerWidth / window.innerHeight;
                 const frustumSize = 5;
                 camera.left = (frustumSize * aspect) / -2;
                 camera.right = (frustumSize * aspect) / 2;
-                camera.top = frustumSize / 2;
-                camera.bottom = frustumSize / -2;
+                camera.updateProjectionMatrix();
             }
 
-            camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 

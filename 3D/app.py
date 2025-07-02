@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Flask + OpenGL 3D Graphics Application (Single File Backend)
-Simplified version - hanya 2 file: app.py + 3d.html
 """
 
 from flask import Flask, send_file
@@ -23,13 +22,15 @@ try:
     import pygame
     from pygame.locals import *
     OPENGL_AVAILABLE = True
-except ImportError:
+    print("✅ OpenGL modules loaded successfully")
+except ImportError as e:
     OPENGL_AVAILABLE = False
-    print("⚠️  OpenGL not available. Install with: pip install PyOpenGL pygame")
+    print(f"⚠️  OpenGL not available: {e}")
+    print("Install with: pip install PyOpenGL pygame")
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'graphics3d_secret'
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=False)
 
 class OpenGLRenderer:
     def __init__(self):
@@ -85,6 +86,9 @@ class OpenGLRenderer:
         self.vertex_count = 8
         self.face_count = 6
         
+        # Flag for parameter updates
+        self.params_updated = False
+        
     def init_opengl(self):
         """Initialize OpenGL context"""
         if not OPENGL_AVAILABLE:
@@ -92,10 +96,10 @@ class OpenGLRenderer:
             return False
             
         try:
-            os.environ['SDL_VIDEO_WINDOW_POS'] = '100,100'
+            os.environ['SDL_VIDEO_WINDOW_POS'] = '200,100'
             pygame.init()
             pygame.display.set_mode((self.window_width, self.window_height), DOUBLEBUF | OPENGL)
-            pygame.display.set_caption("OpenGL 3D Renderer - Controlled by Web UI")
+            pygame.display.set_caption("🎮 Python OpenGL 3D Renderer - Controlled by Web UI")
             
             # Enable depth testing
             glEnable(GL_DEPTH_TEST)
@@ -114,6 +118,8 @@ class OpenGLRenderer:
             
             # Set background color
             glClearColor(0.06, 0.06, 0.14, 1.0)
+            
+            print("✅ OpenGL initialized successfully")
             return True
             
         except Exception as e:
@@ -366,6 +372,7 @@ class OpenGLRenderer:
                     self.create_test_tetrahedron()
                     return True
                 else:
+                    print(f"⚠️  OBJ file not found: {filename}")
                     return False
                     
             with open(filename, 'r') as file:
@@ -394,10 +401,11 @@ class OpenGLRenderer:
             self.vertex_count = len(self.obj_vertices)
             self.face_count = len(self.obj_faces)
             self.current_object = 'obj'
+            print(f"✅ OBJ loaded: {filename} - {self.vertex_count} vertices, {self.face_count} faces")
             return True
             
         except Exception as e:
-            print(f"Error loading OBJ file: {e}")
+            print(f"❌ Error loading OBJ file: {e}")
             return False
     
     def create_test_tetrahedron(self):
@@ -419,6 +427,7 @@ class OpenGLRenderer:
         self.vertex_count = 4
         self.face_count = 4
         self.current_object = 'obj'
+        print("✅ Created test tetrahedron")
     
     def draw_obj_model(self):
         """Draw OBJ model"""
@@ -440,7 +449,10 @@ class OpenGLRenderer:
                 v3 = np.array(self.obj_vertices[face[2]])
                 
                 normal = np.cross(v2 - v1, v3 - v1)
-                normal = normal / np.linalg.norm(normal)
+                if np.linalg.norm(normal) > 0:
+                    normal = normal / np.linalg.norm(normal)
+                else:
+                    normal = np.array([0.0, 1.0, 0.0])
                 
                 glNormal3f(normal[0], normal[1], normal[2])
                 glVertex3f(v1[0], v1[1], v1[2])
@@ -482,6 +494,11 @@ class OpenGLRenderer:
         """Main rendering function"""
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         
+        # Update projection if parameters changed
+        if self.params_updated:
+            self.setup_projection()
+            self.params_updated = False
+        
         self.setup_camera()
         self.setup_phong_lighting()
         
@@ -493,7 +510,7 @@ class OpenGLRenderer:
     def update_animation(self):
         """Update animation"""
         if self.auto_rotate:
-            self.rotation_angle += 0.5
+            self.rotation_angle += 0.8
             if self.rotation_angle >= 360:
                 self.rotation_angle = 0
     
@@ -502,7 +519,8 @@ class OpenGLRenderer:
         if not self.init_opengl():
             return
             
-        print("✅ OpenGL Renderer started")
+        print("✅ OpenGL Renderer started successfully!")
+        print("🎮 Python OpenGL window is now running and controlled by Web UI")
         self.running = True
         
         clock = pygame.time.Clock()
@@ -511,23 +529,25 @@ class OpenGLRenderer:
         while self.running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    print("🔌 OpenGL window closed")
                     self.running = False
             
             self.update_animation()
             self.render()
             clock.tick(60)
             
-            # Emit status every 60 frames
+            # Emit status every 120 frames (2 seconds at 60fps)
             frame_counter += 1
-            if frame_counter % 60 == 0:
+            if frame_counter % 120 == 0:
                 self.emit_status()
         
         pygame.quit()
+        print("✅ OpenGL renderer stopped")
     
     def emit_status(self):
         """Emit current status to web UI"""
         try:
-            socketio.emit('status_update', {
+            status_data = {
                 'object': self.current_object.title(),
                 'vertices': self.vertex_count,
                 'faces': self.face_count,
@@ -539,9 +559,10 @@ class OpenGLRenderer:
                     'diffuse': self.lighting_params['diffuse_enabled'],
                     'specular': self.lighting_params['specular_enabled']
                 }
-            })
-        except:
-            pass
+            }
+            socketio.emit('status_update', status_data)
+        except Exception as e:
+            print(f"⚠️  Error emitting status: {e}")
 
 # Global renderer instance
 renderer = OpenGLRenderer() if OPENGL_AVAILABLE else None
@@ -549,15 +570,28 @@ renderer = OpenGLRenderer() if OPENGL_AVAILABLE else None
 @app.route('/')
 def index():
     """Serve main page"""
+    if not os.path.exists('3d.html'):
+        return f"""
+        <html>
+        <head><title>Error - File Not Found</title></head>
+        <body style="font-family: Arial; padding: 40px; background: #f5f5f5;">
+            <h2 style="color: #d32f2f;">❌ File Not Found</h2>
+            <p><strong>3d.html</strong> not found in the current directory.</p>
+            <p>Please ensure <code>3d.html</code> is in the same directory as <code>app.py</code></p>
+            <p>Current directory: <code>{os.getcwd()}</code></p>
+            <p>Files in directory: {list(os.listdir('.'))}</p>
+        </body>
+        </html>
+        """
     return send_file('3d.html')
 
 # WebSocket event handlers
 @socketio.on('connect')
 def handle_connect():
     """Handle client connection"""
-    print('🔗 Client connected')
+    print('🔗 Web client connected to WebSocket')
     if renderer:
-        emit('status_update', {
+        status_data = {
             'object': renderer.current_object.title(),
             'vertices': renderer.vertex_count,
             'faces': renderer.face_count,
@@ -569,12 +603,13 @@ def handle_connect():
                 'diffuse': renderer.lighting_params['diffuse_enabled'],
                 'specular': renderer.lighting_params['specular_enabled']
             }
-        })
+        }
+        emit('status_update', status_data)
 
 @socketio.on('disconnect')
 def handle_disconnect():
     """Handle client disconnection"""
-    print('🔌 Client disconnected')
+    print('🔌 Web client disconnected from WebSocket')
 
 @socketio.on('set_object')
 def handle_set_object(data):
@@ -584,37 +619,53 @@ def handle_set_object(data):
         if obj_type in ['cube', 'pyramid', 'sphere']:
             renderer.current_object = obj_type
             print(f"📦 Object changed to: {obj_type}")
+            
+            # Update vertex/face counts based on object
+            if obj_type == 'cube':
+                renderer.vertex_count = 8
+                renderer.face_count = 6
+            elif obj_type == 'pyramid':
+                renderer.vertex_count = 5
+                renderer.face_count = 5
+            elif obj_type == 'sphere':
+                renderer.vertex_count = 514
+                renderer.face_count = 512
 
 @socketio.on('update_transform')
 def handle_update_transform(data):
     """Handle transform updates from web UI"""
     if renderer:
         renderer.transform_params.update(data)
+        print(f"🔄 Transform updated: {data}")
 
 @socketio.on('update_camera')
 def handle_update_camera(data):
     """Handle camera updates from web UI"""
     if renderer:
         renderer.camera_params.update(data)
+        print(f"👁️ Camera updated: {data}")
 
 @socketio.on('update_perspective')
 def handle_update_perspective(data):
     """Handle perspective updates from web UI"""
     if renderer:
         renderer.perspective_params.update(data)
-        renderer.setup_projection()
+        renderer.params_updated = True
+        print(f"📐 Perspective updated: {data}")
 
 @socketio.on('update_lighting')
 def handle_update_lighting(data):
     """Handle lighting updates from web UI"""
     if renderer:
         renderer.lighting_params.update(data)
+        print(f"💡 Lighting updated: {data}")
 
 @socketio.on('toggle_wireframe')
 def handle_toggle_wireframe():
     """Toggle wireframe mode"""
     if renderer:
         renderer.wireframe_mode = not renderer.wireframe_mode
+        print(f"🕸️ Wireframe mode: {renderer.wireframe_mode}")
         emit('wireframe_toggled', {'enabled': renderer.wireframe_mode})
 
 @socketio.on('toggle_auto_rotate')
@@ -622,6 +673,7 @@ def handle_toggle_auto_rotate():
     """Toggle auto rotation"""
     if renderer:
         renderer.auto_rotate = not renderer.auto_rotate
+        print(f"🔄 Auto rotation: {renderer.auto_rotate}")
         emit('auto_rotate_toggled', {'enabled': renderer.auto_rotate})
 
 @socketio.on('set_projection')
@@ -629,7 +681,8 @@ def handle_set_projection(data):
     """Set projection mode"""
     if renderer:
         renderer.projection_mode = data['mode']
-        renderer.setup_projection()
+        renderer.params_updated = True
+        print(f"📽️ Projection mode: {data['mode']}")
 
 @socketio.on('reset_camera')
 def handle_reset_camera():
@@ -640,6 +693,7 @@ def handle_reset_camera():
             'center_x': 0.0, 'center_y': 0.0, 'center_z': 0.0,
             'up_x': 0.0, 'up_y': 1.0, 'up_z': 0.0
         }
+        print("🎯 Camera reset to default position")
 
 @socketio.on('load_obj')
 def handle_load_obj(data):
@@ -654,6 +708,9 @@ def handle_load_obj(data):
                 'faces': renderer.face_count,
                 'filename': os.path.basename(filename)
             })
+            print(f"✅ OBJ file loaded successfully: {filename}")
+        else:
+            print(f"❌ Failed to load OBJ file: {filename}")
         
         emit('obj_load_result', {'success': success, 'filename': filename})
 
@@ -700,10 +757,11 @@ def print_banner():
 ╔══════════════════════════════════════════════════════════════╗
 ║                                                              ║
 ║     🎮 Flask + OpenGL 3D Graphics Application 🎮           ║
+║                    FIXED VERSION                            ║
 ║                                                              ║
-║  ✨ Simplified 2-File Version                               ║
-║  🎯 HTML UI + Python OpenGL Backend                         ║
-║  🔗 Real-time WebSocket Communication                       ║
+║  ✨ Proper WebSocket Communication                          ║
+║  🎯 HTML UI Controls Python OpenGL Backend                  ║
+║  🔗 Real-time Parameter Synchronization                     ║
 ║  🎨 Native OpenGL Performance                               ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
@@ -713,20 +771,26 @@ def print_banner():
 def start_renderer():
     """Start OpenGL renderer in separate thread"""
     if renderer:
-        renderer.run()
+        try:
+            renderer.run()
+        except Exception as e:
+            print(f"❌ Renderer error: {e}")
 
 if __name__ == '__main__':
     print_banner()
     
     # Check and install requirements
+    print("🔍 Checking requirements...")
     if not install_requirements():
         input("Press Enter to exit...")
         sys.exit(1)
     
-    # Check if 3d.html exists (FIXED: was checking for index.html)
+    # Check if 3d.html exists
     if not os.path.exists('3d.html'):
         print("❌ 3d.html not found!")
         print("Please ensure 3d.html is in the same directory as app.py")
+        print(f"Current directory: {os.getcwd()}")
+        print(f"Files in directory: {list(os.listdir('.'))}")
         input("Press Enter to exit...")
         sys.exit(1)
     
@@ -734,35 +798,55 @@ if __name__ == '__main__':
     
     # Start OpenGL renderer in background thread if available
     if OPENGL_AVAILABLE and renderer:
+        print("🎮 Starting OpenGL renderer thread...")
         renderer_thread = threading.Thread(target=start_renderer, daemon=True)
         renderer_thread.start()
-        time.sleep(1)  # Give renderer time to initialize
-        print("✅ OpenGL renderer started")
+        time.sleep(2)  # Give renderer time to initialize
+        
+        if renderer.running:
+            print("✅ OpenGL renderer is running successfully!")
+        else:
+            print("⚠️  OpenGL renderer failed to start")
     else:
-        print("⚠️  OpenGL not available - UI only mode")
+        print("⚠️  OpenGL not available - WebSocket server only mode")
+        print("The web interface will still work, but no 3D rendering will occur")
     
     # Try to open browser
     try:
         time.sleep(1)
         webbrowser.open('http://localhost:5000')
         print("🌐 Opening web browser...")
-    except:
-        print("🌐 Please open http://localhost:5000 in your browser")
+    except Exception as e:
+        print(f"⚠️  Could not open browser automatically: {e}")
+        print("🌐 Please open http://localhost:5000 in your browser manually")
     
-    print("\n" + "="*60)
-    print("🎮 Controls:")
-    print("  • Web UI: http://localhost:5000")
-    print("  • OpenGL Window: Mouse drag = rotate, wheel = zoom")
-    print("  • Keyboard (Web): 1,2,3 = objects, Space = auto-rotate")
-    print("  • Press Ctrl+C to stop")
-    print("="*60 + "\n")
+    print("\n" + "="*70)
+    print("🎮 INSTRUCTIONS:")
+    print("  1. Web UI: http://localhost:5000")
+    print("  2. The HTML interface now controls the Python OpenGL window")
+    print("  3. Change objects, transformations, lighting in the web UI")
+    print("  4. Watch the changes happen in the Python OpenGL window")
+    print("  5. Check connection status in the top-right corner of web UI")
+    print("")
+    print("🔧 CONTROLS:")
+    print("  • Web UI sliders/buttons control Python OpenGL rendering")
+    print("  • Connection indicator shows WebSocket status")
+    print("  • Python OpenGL window shows actual 3D rendering")
+    print("  • Press Ctrl+C to stop both servers")
+    print("="*70 + "\n")
     
     # Start Flask-SocketIO server
     try:
-        socketio.run(app, host='0.0.0.0', port=5000, debug=False)
+        print("🌐 Starting Flask-SocketIO server on http://localhost:5000")
+        socketio.run(app, host='0.0.0.0', port=5000, debug=False, allow_unsafe_werkzeug=True)
     except KeyboardInterrupt:
         print("\n👋 Application stopped by user")
+        if renderer:
+            renderer.running = False
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\n❌ Server error: {e}")
         input("Press Enter to exit...")
-        
+    finally:
+        if renderer:
+            renderer.running = False
+        print("🔚 Application terminated")
